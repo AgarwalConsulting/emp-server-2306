@@ -10,14 +10,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	log "github.com/sirupsen/logrus"
-)
 
-type Employee struct {
-	ID         int    `json:"-"`
-	Name       string `json:"name"`
-	Department string `json:"speciality"`
-	ProjectID  int    `json:"projectID"`
-}
+	"algogrit.com/emp-server/entities"
+)
 
 // func (e Employee) MarshalJSON() ([]byte, error) {
 // 	jsonString := fmt.Sprintf(`{"name": "%s", "speciality": "%s", "projectID": %d}`, e.Name, e.Department, e.ProjectID)
@@ -25,7 +20,7 @@ type Employee struct {
 // 	return []byte(jsonString), nil
 // }
 
-var employees = []Employee{
+var employees = []entities.Employee{
 	{1, "Gaurav", "LnD", 10001},
 	{2, "Vignesh", "SRE", 10002},
 	{3, "Kavitha", "Cloud", 20001},
@@ -39,7 +34,7 @@ func EmployeeIndexHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func EmployeeCreateHandler(w http.ResponseWriter, req *http.Request) {
-	var newEmp Employee
+	var newEmp entities.Employee
 	err := json.NewDecoder(req.Body).Decode(&newEmp)
 
 	if err != nil {
