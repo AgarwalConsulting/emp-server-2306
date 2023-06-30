@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Employee struct {
@@ -50,16 +53,33 @@ func EmployeeCreateHandler(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(newEmp)
 }
 
-func EmployeesHandler(w http.ResponseWriter, req *http.Request) {
-	if req.Method == "POST" {
-		EmployeeCreateHandler(w, req)
-	} else {
-		EmployeeIndexHandler(w, req)
+func EmployeeShowHandler(w http.ResponseWriter, req *http.Request) {
+	empID := chi.URLParam(req, "id")   // Type: string
+	empIdx, err := strconv.Atoi(empID) // Type: int
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, err)
+		return
 	}
+
+	emp := employees[empIdx-1]
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(emp)
 }
 
+// func EmployeesHandler(w http.ResponseWriter, req *http.Request) {
+// 	if req.Method == "POST" {
+// 		EmployeeCreateHandler(w, req)
+// 	} else {
+// 		EmployeeIndexHandler(w, req)
+// 	}
+// }
+
 func main() {
-	r := http.NewServeMux()
+	// r := http.NewServeMux()
+	r := chi.NewRouter()
 
 	r.HandleFunc("/hello", func(w http.ResponseWriter, req *http.Request) {
 		msg := "Hello, World!" // Type: string
@@ -69,7 +89,9 @@ func main() {
 
 	// r.HandleFunc("/employees", EmployeeIndexHandler)
 	// r.HandleFunc("/employees", EmployeeCreateHandler)
-	r.HandleFunc("/employees", EmployeesHandler)
+	r.Get("/employees", EmployeeIndexHandler)
+	r.Post("/employees", EmployeeCreateHandler)
+	r.HandleFunc("/employees/{id}", EmployeeShowHandler)
 
 	http.ListenAndServe("localhost:8000", r)
 }
