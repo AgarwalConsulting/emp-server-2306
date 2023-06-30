@@ -11,24 +11,23 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	log "github.com/sirupsen/logrus"
 
+	"algogrit.com/emp-server/employees/repository"
 	"algogrit.com/emp-server/entities"
 )
 
-// func (e Employee) MarshalJSON() ([]byte, error) {
-// 	jsonString := fmt.Sprintf(`{"name": "%s", "speciality": "%s", "projectID": %d}`, e.Name, e.Department, e.ProjectID)
-
-// 	return []byte(jsonString), nil
-// }
-
-var employees = []entities.Employee{
-	{1, "Gaurav", "LnD", 10001},
-	{2, "Vignesh", "SRE", 10002},
-	{3, "Kavitha", "Cloud", 20001},
-}
+var empRepo = repository.NewInMem()
 
 func EmployeeIndexHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	// fmt.Fprintln(w, employees)
+
+	employees, err := empRepo.ListAll()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		fmt.Fprintln(w, err)
+		return
+	}
 
 	json.NewEncoder(w).Encode(employees)
 }
@@ -44,16 +43,21 @@ func EmployeeCreateHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newEmp.ID = len(employees) + 1
-	employees = append(employees, newEmp)
+	createdEmp, err := empRepo.Save(newEmp)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		fmt.Fprintln(w, err)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newEmp)
+	json.NewEncoder(w).Encode(createdEmp)
 }
 
 func EmployeeShowHandler(w http.ResponseWriter, req *http.Request) {
-	empID := chi.URLParam(req, "id")   // Type: string
-	empIdx, err := strconv.Atoi(empID) // Type: int
+	empID, err := strconv.Atoi(chi.URLParam(req, "id"))
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -61,7 +65,14 @@ func EmployeeShowHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	emp := employees[empIdx-1]
+	emp, err := empRepo.GetByID(empID)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		fmt.Fprintln(w, err)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(emp)
