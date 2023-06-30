@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	log "github.com/sirupsen/logrus"
 )
 
 type Employee struct {
@@ -77,9 +80,28 @@ func EmployeeShowHandler(w http.ResponseWriter, req *http.Request) {
 // 	}
 // }
 
+func LoggingMiddleware(next http.Handler) http.Handler {
+	h := func(w http.ResponseWriter, req *http.Request) {
+		startTime := time.Now()
+
+		// if //
+		next.ServeHTTP(w, req)
+		// else
+
+		dur := time.Since(startTime)
+
+		log.Infof("%s %s took %v", req.Method, req.URL, dur)
+	}
+
+	return http.HandlerFunc(h)
+}
+
 func main() {
 	// r := http.NewServeMux()
 	r := chi.NewRouter()
+
+	// r.Use(LoggingMiddleware)
+	r.Use(middleware.DefaultLogger)
 
 	r.HandleFunc("/hello", func(w http.ResponseWriter, req *http.Request) {
 		msg := "Hello, World!" // Type: string
@@ -93,5 +115,6 @@ func main() {
 	r.Post("/employees", EmployeeCreateHandler)
 	r.HandleFunc("/employees/{id}", EmployeeShowHandler)
 
+	// http.ListenAndServe("localhost:8000", LoggingMiddleware(r))
 	http.ListenAndServe("localhost:8000", r)
 }
