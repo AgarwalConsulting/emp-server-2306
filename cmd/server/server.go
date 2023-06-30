@@ -12,15 +12,17 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"algogrit.com/emp-server/employees/repository"
+	"algogrit.com/emp-server/employees/service"
 	"algogrit.com/emp-server/entities"
 )
 
 var empRepo = repository.NewInMem()
+var empSvcV1 = service.NewV1(empRepo)
 
 func EmployeeIndexHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	employees, err := empRepo.ListAll()
+	employees, err := empSvcV1.Index()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -43,7 +45,7 @@ func EmployeeCreateHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	createdEmp, err := empRepo.Save(newEmp)
+	createdEmp, err := empSvcV1.Create(newEmp)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -65,7 +67,7 @@ func EmployeeShowHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	emp, err := empRepo.GetByID(empID)
+	emp, err := empSvcV1.Show(empID)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
