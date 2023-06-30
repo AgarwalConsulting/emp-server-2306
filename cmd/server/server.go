@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
@@ -29,7 +30,14 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	var empRepo = repository.NewInMem()
+	// var empRepo = repository.NewInMem()
+	db, err := sql.Open("mysql", "root@/employees")
+	if err != nil {
+		log.Fatalln("Unable to connect:", err)
+	}
+	defer db.Close()
+
+	var empRepo = repository.NewSQL(db)
 	var empSvcV1 = service.NewV1(empRepo)
 	var empHandler = empHTTP.NewHandler(empSvcV1)
 
